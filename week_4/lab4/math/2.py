@@ -1,6 +1,6 @@
-import math
-n = float(input("Input number of sides: "))
-l = float(input("Input the length of a side: "))
+height = float(input("Height: "))
+bottom = float(input("Base, first value: "))
+top = float(input("Base, second value: "))
 
-area = (n * (l**2) * (1/math.tan(math.radians(180/n)))) / 4
-print("The area of this polygon is:", round(area, 2))
+area = ((bottom + top) * height )/ 2
+print("area is:", area)
