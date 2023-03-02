@@ -1,7 +1,7 @@
 import re
 
 txt = input()
-find = 'ab*'
+find = r'ab*'
 a = re.search(find, txt)
 
 print(a)
