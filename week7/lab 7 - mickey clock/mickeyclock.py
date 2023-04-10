@@ -11,8 +11,8 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 path = r"C:/pp2/week7/lab 7 - mickey clock/" 
 
 background = pygame.image.load(path + "clock.png")
-arrow_m = pygame.image.load(path + "arrow_s.png")
-arrow_s = pygame.image.load(path + "arrow_b.png")
+arrow_m = pygame.image.load(path + "arrow_b.png")
+arrow_s = pygame.image.load(path + "arrow_s.png")
 plane = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
 
 arrow_sbox = arrow_s.get_rect()
