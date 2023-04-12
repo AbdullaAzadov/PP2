@@ -13,10 +13,20 @@ pygame.display.set_caption("Music Player")
 screen = pygame.display.set_mode((width, height))
 controlbar = pygame.Surface((width, height//3))
 controlbar_rect = controlbar.get_rect()
+songPicture = pygame.Surface((width * 0.667, height//2))
+songPicture_rect = songPicture.get_rect()
+songPicture_rect.centerx = width / 2
+songPicture_rect.top = int(screen.get_height() / 16)
+controlbar_up = height - controlbar.get_height()
 prev_action = pygame.key.get_pressed()
+prev_click = pygame.mouse.get_pressed()
 randomOn = False
 loop = False
 pause = False
+angle = 1
+# Текст
+smallfont = pygame.font.Font(None, int(screen.get_height() / 20))
+bigfont = pygame.font.Font(None, int(screen.get_height() / 17))
 
 # Цвета
 bg_clr = (50, 50, 75)
