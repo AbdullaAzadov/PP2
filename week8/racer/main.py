@@ -23,6 +23,7 @@ WHITE = (255, 255, 255)
 SCREEN_WIDTH = 400
 SCREEN_HEIGHT = 600
 SPEED = 4
+SCORE = 0
  
 # Создаем окно игры
 DISPLAYSURF = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
@@ -31,7 +32,10 @@ pygame.display.set_caption("Game")
  
 # Шрифты:
 smallfont = pygame.font.Font(None, int(SCREEN_HEIGHT / 20))
-bigfont = pygame.font.Font(None, int(SCREEN_HEIGHT / 15))
+bigfont = pygame.font.Font(None, int(SCREEN_HEIGHT / 10))
+game_over = bigfont.render("GAME OVER", 1, BLACK)
+game_over_rect = game_over.get_rect()
+game_over_rect.center = (SCREEN_WIDTH/2,SCREEN_HEIGHT/2)
 
 # Фоновая музыка
 pygame.mixer.music.load(path + "background.wav")
@@ -39,6 +43,7 @@ pygame.mixer.music.play()
 END_TRACK = pygame.USEREVENT + 2
 pygame.mixer.music.set_endevent(END_TRACK)
 
+background = pygame.image.load(path + "AnimatedStreet.png")
 
 # Классы
 #   класс врага 
@@ -50,10 +55,14 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.center = (random.randint(40,SCREEN_WIDTH-40), 0)    
  
       def move(self):
+        global SCORE, SPEED
+        # Если враг за границей экрана то спавним его заново и увеличиваем скорость и счет
         self.rect.move_ip(0,SPEED)
         if (self.rect.top > SCREEN_HEIGHT):
             self.rect.top = 0
             self.rect.center = (random.randint(30, 370), 0)
+            SCORE+= 1
+            SPEED+= 1
  
 # класс игрока
 class Player(pygame.sprite.Sprite):
@@ -97,16 +106,23 @@ while True:
             sys.exit()
  
  
-    DISPLAYSURF.fill(WHITE)
- 
+    DISPLAYSURF.blit(background, (0, 0))
+
     #Движение и рендеринг спрайтов
     for entity in all_sprites:
         DISPLAYSURF.blit(entity.image, entity.rect)
         entity.move()
- 
+    # рендер счета
+    score = smallfont.render(str(SCORE), 1, BLACK)
+    DISPLAYSURF.blit(score, (5, 5))
+
+
     #Коллизия и столкновения
     if pygame.sprite.spritecollideany(P1, enemies):
           DISPLAYSURF.fill(RED)
+          pygame.mixer.Sound(path + 'crash.wav').play()
+          DISPLAYSURF.blit(game_over, game_over_rect)
+          time.sleep(0.5)
           pygame.display.update()
           for entity in all_sprites:
                 entity.kill() 
