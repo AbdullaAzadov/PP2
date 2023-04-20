@@ -17,6 +17,8 @@ lvl = 1
 SCORE = 0
 NEEDED = 5
 lose = False
+spawn = True
+timer = time.time()
 
 # спрайт яблока
 apple = pygame.image.load(path+"apple.png")
@@ -54,10 +56,7 @@ class Food:
     # рисуем
     def draw(self):
         global earned, food_x, food_y # earned- триггер который будет определять съел ли змея яблоку, и будущие позиции
-        rect = pygame.Rect(BLOCK_SIZE * food_x, BLOCK_SIZE * food_y,
-                           BLOCK_SIZE, BLOCK_SIZE)
-        SCREEN.blit(apple, rect) # рендерим
-        if earned: # если змея прикоснулась к яблоке
+        if earned and spawn: # если змея прикоснулась к яблоке
             while True:
                 rand_x = random.randint(0, 19) # даем рандомное место и проверяем
                 rand_y = random.randint(0, 19)
@@ -65,7 +64,10 @@ class Food:
                     food_x, food_y = rand_x, rand_y
                     break
             earned = False # инача циклично будем пересоздавать яблоко, пока не определим подходящее место
-
+        rect = pygame.Rect(BLOCK_SIZE * food_x, BLOCK_SIZE * food_y,
+                           BLOCK_SIZE, BLOCK_SIZE)
+        if spawn:
+            SCREEN.blit(apple, rect) # рендерим
 # Класс игрока
 class Snake:
     # координаты для появления в начале игры
@@ -122,7 +124,7 @@ class Snake:
 
 # Основной цикл
 def main():
-    global SCREEN, CLOCK, side_x, side_y, input, SCORE, earned, Field, lvl, lose, food_x, food_y, NEEDED
+    global SCREEN, CLOCK, side_x, side_y, input, SCORE, earned, Field, lvl, lose, food_x, food_y, NEEDED, spawn, timer
     # все эти глобалы нужны чтобы была возможность начинать заново игру без выхода из игры
     pygame.init()
     SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -142,7 +144,6 @@ def main():
     snake = Snake()
     food = Food()
     wall = Wall()
-
     # ОСновной цикл
     while True:
         for event in pygame.event.get():
@@ -173,6 +174,14 @@ def main():
                     side_x = 0
                 input = False
         SCREEN.fill(BLACK)
+
+        if time.time() - timer > 10.0:  
+            timer = time.time()
+            spawn = True
+            earned = True
+        elif time.time() - timer > 8.0: 
+            spawn = False
+
 
         # запускаем классы и рендерим
         snake.check_collision(food)
