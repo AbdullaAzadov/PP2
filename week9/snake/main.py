@@ -1,33 +1,39 @@
 import pygame, random, time, sys
 
 pygame.init()
-
+scale = 2
 # инициализируем константы
 
-path = "C:/pp2/week8/snake/"
+path = "C:/pp2/week9/snake/"
 BLACK = (0, 4, 0)
 LINE_COLOR = (50, 50, 50)
-HEIGHT = 400
-WIDTH = 400
+HEIGHT = 600
+WIDTH = 600
 side_x = 0
 side_y = 0
-BLOCK_SIZE = 20
+BLOCK_SIZE = 30
 Field = [], []
 lvl = 1
 SCORE = 0
 NEEDED = 5
+start = time.time()
+rgb_wall = (random.randint(33, 100), random.randint(33, 100), random.randint(33, 100))
+rgb_snake = [252,133,29]
+random.shuffle(rgb_snake)
+
 lose = False
-spawn = True
-timer = time.time()
 
 # спрайт яблока
-apple = pygame.image.load(path+"apple.png")
+apple = pygame.transform.scale(pygame.image.load(path+"apple.png"), (BLOCK_SIZE, BLOCK_SIZE))
 
 # Шрифт и текст
 font = pygame.font.Font(None, int(HEIGHT // 8))
 gm_ovr = font.render("GAME OVER", 1, BLACK)
 gm_ovr_rect = gm_ovr.get_rect()
 gm_ovr_rect.center = (WIDTH / 2, HEIGHT / 2)
+new_lvl = font.render("NEW LEVEL", 1, BLACK)
+new_lvl_rect = new_lvl.get_rect()
+new_lvl_rect.center = (WIDTH / 2, HEIGHT / 2)
 deffont = pygame.font.Font(None, int(BLOCK_SIZE*1.5))
 
 # Класс поинта
@@ -46,7 +52,7 @@ class Wall:
     def draw(self, x, y):
         rect = pygame.Rect(BLOCK_SIZE * x, BLOCK_SIZE * y, BLOCK_SIZE,
                            BLOCK_SIZE)
-        pygame.draw.rect(SCREEN, (0, 100, 0), rect)
+        pygame.draw.rect(SCREEN, rgb_wall, rect)
 
 # Класс ябоки
 class Food:
@@ -55,24 +61,25 @@ class Food:
         self.location = (food_x, food_y)
     # рисуем
     def draw(self):
-        global earned, food_x, food_y # earned- триггер который будет определять съел ли змея яблоку, и будущие позиции
-        if earned and spawn: # если змея прикоснулась к яблоке
+        global earned, food_x, food_y, start # earned- триггер который будет определять съел ли змея яблоку, и будущие позиции
+        rect = pygame.Rect(BLOCK_SIZE * food_x, BLOCK_SIZE * food_y,
+                           BLOCK_SIZE, BLOCK_SIZE)
+        SCREEN.blit(apple, rect) # рендерим
+        if earned or time.time() - start > 8: # если змея прикоснулась к яблоке
             while True:
+                start = time.time()
                 rand_x = random.randint(0, 19) # даем рандомное место и проверяем
                 rand_y = random.randint(0, 19)
                 if Field[rand_y][rand_x] == "=": # если все в порядке то, даем ранд значение к настоящим координатам
                     food_x, food_y = rand_x, rand_y
                     break
             earned = False # инача циклично будем пересоздавать яблоко, пока не определим подходящее место
-        rect = pygame.Rect(BLOCK_SIZE * food_x, BLOCK_SIZE * food_y,
-                           BLOCK_SIZE, BLOCK_SIZE)
-        if spawn:
-            SCREEN.blit(apple, rect) # рендерим
+
 # Класс игрока
 class Snake:
     # координаты для появления в начале игры
     def __init__(self):
-        self.body = [Point(random.randint(13, 19), 10)]
+        self.body = [Point(random.randint(13, 18), 10)]
         self.dx = 0
         self.dy = 0
     # дельта х и у будут определять в куда перемещать змею
@@ -105,12 +112,15 @@ class Snake:
         # Рендерим его так чтобы отдельно голова была другого цвета
         rect = pygame.Rect(BLOCK_SIZE * point.x, BLOCK_SIZE * point.y,
                            BLOCK_SIZE, BLOCK_SIZE)
-        pygame.draw.rect(SCREEN, (237,118,14), rect)
+        pygame.draw.rect(SCREEN, rgb_snake, rect)
 
-        for point in self.body[1:]:
+        for i, point in enumerate(self.body[1:]):
             rect = pygame.Rect(BLOCK_SIZE * point.x, BLOCK_SIZE * point.y,
                                BLOCK_SIZE, BLOCK_SIZE)
-            pygame.draw.rect(SCREEN, (204,85,0), rect)
+            rgb = [rgb_snake[0] - 15 - (i * 3), rgb_snake[1] - 15 - (i * 3), rgb_snake[2] - 15 - (i * 3)]
+            for ch in range(3): 
+                if rgb[ch] < 0: rgb[ch] = 0
+            pygame.draw.rect(SCREEN, rgb, rect)
 
         # Коллиззия
     def check_collision(self, food):
@@ -124,7 +134,7 @@ class Snake:
 
 # Основной цикл
 def main():
-    global SCREEN, CLOCK, side_x, side_y, input, SCORE, earned, Field, lvl, lose, food_x, food_y, NEEDED, spawn, timer
+    global SCREEN, CLOCK, side_x, side_y, input, SCORE, earned, Field, lvl, lose, food_x, food_y, NEEDED, start, rgb_snake, rgb_wall
     # все эти глобалы нужны чтобы была возможность начинать заново игру без выхода из игры
     pygame.init()
     SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -144,6 +154,7 @@ def main():
     snake = Snake()
     food = Food()
     wall = Wall()
+
     # ОСновной цикл
     while True:
         for event in pygame.event.get():
@@ -173,15 +184,7 @@ def main():
                     side_y = 1
                     side_x = 0
                 input = False
-        SCREEN.fill(BLACK)
-
-        if time.time() - timer > 10.0:  
-            timer = time.time()
-            spawn = True
-            earned = True
-        elif time.time() - timer > 8.0: 
-            spawn = False
-
+        SCREEN.fill((rgb_wall[0] // 3, rgb_wall[1] // 3, rgb_wall[2] // 3))
 
         # запускаем классы и рендерим
         snake.check_collision(food)
@@ -191,21 +194,27 @@ def main():
 
         # Если счет больше или равен чем нужно
         if (SCORE >= NEEDED):
-            if lvl == 2:   NEEDED = 12
-            elif lvl == 3: NEEDED = 20
-            elif lvl == 4: NEEDED = 30
-            else: NEEDED == 999
             # настраиваем сколько нужно для след уровня и увеличываем уровень
             lvl += 1
+            if lvl == 2:   NEEDED = 15
+            elif lvl == 3: NEEDED = 30
+            elif lvl == 4: NEEDED = 50
+            else: NEEDED = 999
+
             # Cбрасываем все к новой карте и заново начинаем 
+            start = time.time()
             earned = False
-            input = True  
+            input = False  
             lose = False
             snake = Snake()
             food = Food()
             wall = Wall() 
             food_x = random.randint(2, 7)
             food_y = 10 
+            SCREEN.fill(rgb_wall)
+            SCREEN.blit(new_lvl, new_lvl_rect)
+            pygame.display.update()
+            rgb_wall = (random.randint(33, 100), random.randint(33, 100), random.randint(33, 100))
             with open(path + f'l{lvl-1}.txt') as f:
                 lines = f.read().splitlines()
                 Field = lines
@@ -218,13 +227,16 @@ def main():
                     if Field[y][x] == "#":
                         wall.draw(x, y)
                     if Field[snake.body[0].y][snake.body[0].x] == "#" or lose: # если он прикоснулся к стене или есть триггер lose
-                        SCREEN.fill((200, 0, 0))
+                        SCREEN.fill(rgb_wall)
                         SCREEN.blit(gm_ovr, gm_ovr_rect)
                         pygame.display.update()
                         time.sleep(1)
                         lvl = 1
+                        start = time.time()
                         SCORE = 0
                         NEEDED = 5
+                        rgb_snake = [252,133,29]
+                        random.shuffle(rgb_snake)   
                         # Выводим game over скрин и перезапускаем все
                         with open(path + f'l{lvl-1}.txt') as f:
                             lines = f.read().splitlines()
@@ -236,6 +248,7 @@ def main():
                         wall = Wall()
                         food_x = random.randint(2, 7)
                         food_y = 10 
+                        rgb_wall = (random.randint(33, 100), random.randint(33, 100), random.randint(33, 100))
                         lose = False
                         continue
         # Рендер текста на экране
@@ -250,6 +263,8 @@ def main():
 
         pygame.display.update()
         # скорость игры регилируется с помошью лимита на фпс. скорость змеи растет с каждым новым уровнем
-        CLOCK.tick(5 + lvl-1)
+        speed = 5 + lvl-1
+        if speed > 8: speed = 8
+        CLOCK.tick(speed)
 
 main()

@@ -21,18 +21,16 @@ WHITE = (255, 255, 255)
 # Разрешение экрана и настройки
 SCREEN_WIDTH = 400
 SCREEN_HEIGHT = 600
-SPEED = 3
+SPEED = 2.5
+PlayerSpeed = SPEED
 # Создаем некий буст к скорости который будет увеличиваться, когда мы собираем монеты
-BOOST = 0
+BOOST = .5
 SCORE = 0
 COIN = 0
-# Триггеры спавна монет и триггеры взятия монет
+# Триггеры спавна монет
 spawn_coin = False
 spawn_bigcoin = False
 spawn_diamond = False
-coin_collected = False 
-bigcoin_collected = False
-diamond_collected = False
 
 # Создаем окно игры
 DISPLAYSURF = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
@@ -64,82 +62,105 @@ coinlogo_rect.right = SCREEN_WIDTH-5
 class Enemy(pygame.sprite.Sprite):
       def __init__(self):
         super().__init__() 
-        self.image = pygame.image.load(path + "Enemy.png")
+        self.image = pygame.image.load(path + f"Enemy{random.randint(0, 5)}.png")
         self.rect = self.image.get_rect()
-        self.rect.center = (random.randint(40,SCREEN_WIDTH-40), 0)    
+        self.rect.left, self.rect.bottom = random.randint(10, SCREEN_WIDTH - 10 - self.rect.w), random.randint(-5*self.rect.h, -2*self.rect.h)
  
-      def move(self):
+      def move(self, respawn):
         global SCORE, SPEED
         # Если враг за границей экрана то спавним его заново и увеличиваем скорость и счет
         self.rect.move_ip(0,SPEED + BOOST)
-        if (self.rect.top > SCREEN_HEIGHT):
-            self.rect.top = 0
-            self.rect.center = (random.randint(30, 370), 0)
+        if self.rect.top > SCREEN_HEIGHT:
             SCORE+= 1
-            # Максимальная скорость в игре 20. Так как после 20 становится не возможно играть
-            if SPEED < 20:
-                SPEED+= 0.25
+            SPEED+= 0.1
+        if self.rect.top > SCREEN_HEIGHT or respawn:
+            self.rect.left, self.rect.bottom = random.randint(10, SCREEN_WIDTH - 10 - self.rect.w), random.randint(-5*self.rect.h, -2*self.rect.h)
+
+
+class Background(pygame.sprite.Sprite):
+      def __init__(self):
+        super().__init__() 
+        self.image = pygame.image.load(path + "AnimatedStreet.png")
+        self.rect = self.image.get_rect()
+        self.rect.left, self.rect.centery = 0, 0
+ 
+      def move(self):
+        global SPEED
+        # Если враг за границей экрана то спавним его заново и увеличиваем скорость и счет
+        self.rect.move_ip(0,SPEED)
+        if (self.rect.centery >= SCREEN_HEIGHT):
+            self.rect.centery = 0
+
 # Класс коина. можно сказать что оно унаследовано у Enemy
 class Coin(pygame.sprite.Sprite):
       def __init__(self):
         super().__init__() 
         self.image = pygame.image.load(path + "coin.png")
         self.rect = self.image.get_rect()
-        self.rect.center = (random.randint(24,SCREEN_WIDTH-24), 0)    
+        self.rect.center = (random.randint(24,SCREEN_WIDTH-24), -self.rect.h)    
         # Также инициализируем
-      def move(self):
-        global spawn_coin, coin_collected
+        
+      def move(self, collect):
+        global spawn_coin, BOOST, COIN
         # Спавн_коин это триггер, если она истина то коин может быть заспавнена.
-        # coin_collected это тоже триггер, если она активна то значит что игрок взял этот коин
-        self.rect.move_ip(0,SPEED / 3)# Коин будет двигаться чуть медленнее
+        # collect это тоже триггер, если она активна то значит что игрок взял этот коин
+        self.rect.move_ip(0,SPEED)# Коин будет двигаться чуть медленнее
         if (self.rect.top > SCREEN_HEIGHT) and spawn_coin:
             self.rect.top = -50
-            self.rect.center = (random.randint(24, 384), 0)
+            self.rect.center = (random.randint(24, 384), -self.rect.h)
             spawn_coin = False # После спауна объязательно спаун отключаем.
-        if coin_collected:
+        if collect:
             self.rect.top = SCREEN_HEIGHT+1
-            coin_collected = False
+            COIN+= 1
+            BOOST+= 0.1
+
 # Точно такой же коин (см. сверху), но с другими размерами и скоростями
 class BigCoin(pygame.sprite.Sprite):
       def __init__(self):
         super().__init__() 
         self.image = pygame.image.load(path + "bigcoin.png")
         self.rect = self.image.get_rect()
-        self.rect.center = (random.randint(32,SCREEN_WIDTH-32), 0)    
-      def move(self):
-        global spawn_bigcoin, bigcoin_collected
-        self.rect.move_ip(0, SPEED)
-        if (self.rect.top > SCREEN_HEIGHT) and spawn_bigcoin:
-            self.rect.top = -100
-            self.rect.center = (random.randint(32, 368), 0)
-            spawn_bigcoin = False 
-        if bigcoin_collected:
-            self.rect.top = SCREEN_HEIGHT+1
-            bigcoin_collected = False     
+        self.rect.center = (random.randint(32,SCREEN_WIDTH-32), -self.rect.h)    
+      def move(self, collect):
+        global spawn_bigcoin, BOOST, COIN
+        if spawn_bigcoin:
+            self.rect.move_ip(0, SPEED)
+            if (self.rect.top > SCREEN_HEIGHT) and spawn_bigcoin:
+                self.rect.top = -100
+                self.rect.center = (random.randint(32, 368), -self.rect.h)
+                spawn_bigcoin = False 
+            if collect:
+                self.rect.top = SCREEN_HEIGHT+1
+                COIN+= 2
+                BOOST+= 0.175
 
 class Diamond(pygame.sprite.Sprite):
       def __init__(self):
         super().__init__() 
         self.image = pygame.image.load(path + "diamond.png")
         self.rect = self.image.get_rect()
-        self.rect.center = (random.randint(16,SCREEN_WIDTH-16), 0)    
-      def move(self):
-        global spawn_diamond, diamond_collected
-        self.rect.move_ip(0, SPEED *(0,67))
-        if (self.rect.top > SCREEN_HEIGHT) and spawn_diamond:
-            self.rect.top = -100
-            self.rect.center = (random.randint(16, 384), 0)
-            spawn_diamond = False
-        if diamond_collected:
-            self.rect.top = SCREEN_HEIGHT+1
-            diamond_collected = False     
+        self.rect.center = (random.randint(16,SCREEN_WIDTH-16), -self.rect.h)    
+
+      def move(self, collect):
+        global spawn_diamond, BOOST, COIN
+        if spawn_diamond:
+            self.rect.move_ip(0, SPEED)
+            if (self.rect.top > SCREEN_HEIGHT) and spawn_diamond:
+                self.rect.top = -100
+                self.rect.center = (random.randint(16, 384), -self.rect.h)
+                spawn_diamond = False
+            if collect:
+                BOOST+= 0.25
+                COIN+= 3
+                self.rect.top = SCREEN_HEIGHT+1
+                   
 
 
 # класс игрока
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__() 
-        self.image = pygame.image.load(path + "Player.png")
+        self.image = pygame.image.load(path + f"Player{random.randint(0, 2)}.png")
         self.rect = self.image.get_rect()
         self.rect.center = (160, 520)
         # Такая же процедура что и с пред.
@@ -147,33 +168,41 @@ class Player(pygame.sprite.Sprite):
         pressed_keys = pygame.key.get_pressed()         
         if self.rect.left > 0:
               if pressed_keys[K_LEFT]:
-                  self.rect.move_ip(-5, 0)
+                  self.rect.move_ip(-PlayerSpeed, 0)
         if self.rect.right < SCREEN_WIDTH:        
               if pressed_keys[K_RIGHT]:
-                  self.rect.move_ip(5, 0)
+                  self.rect.move_ip(PlayerSpeed, 0)
+        if self.rect.top > 0:
+              if pressed_keys[K_UP]:
+                  self.rect.move_ip(0, -PlayerSpeed)
+        if self.rect.bottom < SCREEN_HEIGHT:        
+              if pressed_keys[K_DOWN]:
+                  self.rect.move_ip(0, PlayerSpeed)
                   # в сотвесттвии с инпутом, машина передвигается
 # Объявляем классы
 P1 = Player()
 E1 = Enemy()
+E2 = Enemy()
+E3 = Enemy()
+E4 = Enemy()
 C1 = Coin()
 C2 = BigCoin()
 C3 = Diamond()
+BG = Background()
 
 # Группировка спрайтов
-coin = pygame.sprite.Group()
-coin.add(C1)
-bigcoin = pygame.sprite.Group()
-bigcoin.add(C2)
-diamond = pygame.sprite.Group()
-diamond.add(C3)
+coins = pygame.sprite.Group()
+coins.add(C1)
+coins.add(C2)
+coins.add(C3)
+
 enemies = pygame.sprite.Group()
 enemies.add(E1)
-all_sprites = pygame.sprite.Group()
-all_sprites.add(P1)
-all_sprites.add(E1)
-all_sprites.add(C1)
-all_sprites.add(C2)
-all_sprites.add(C3)
+
+entity = pygame.sprite.Group()
+entity.add(BG)
+entity.add(P1)
+
  
 # Добавляем событие с коином. каждые 6, 11, 17 секунд триггер для определенных коинов станет активен
 COIN_SPAWN = pygame.USEREVENT + 1
@@ -184,6 +213,7 @@ DIAMOND_SPAWN = pygame.USEREVENT + 4
 pygame.time.set_timer(DIAMOND_SPAWN, 17000)
 # Главный игровой цикл
 while True:
+    PlayerSpeed = SPEED
     # Ивенты
     for event in pygame.event.get():
         if event.type == COIN_SPAWN:
@@ -202,12 +232,18 @@ while True:
             sys.exit()
  
  
-    DISPLAYSURF.blit(background, (0, 0))
 
     #Движение и рендеринг спрайтов
-    for entity in all_sprites:
-        DISPLAYSURF.blit(entity.image, entity.rect)
-        entity.move()
+    for ent in entity:
+        DISPLAYSURF.blit(ent.image, ent.rect)
+        ent.move()
+    for e in enemies:
+        DISPLAYSURF.blit(e.image, e.rect)
+        e.move(False)
+    for c in coins:
+        DISPLAYSURF.blit(c.image, c.rect)
+        c.move(False)
+        
     # рендер счета
     score = smallfont.render(" " + str(SCORE), 1, BLUE)
     DISPLAYSURF.blit(score, (5, 5))
@@ -218,33 +254,34 @@ while True:
     cn_rect.centery = coinlogo_rect.centery
     DISPLAYSURF.blit(cn, cn_rect)
 
+    if 5 <= COIN < 10 : enemies.add(E2)
+    if 15 <= COIN < 25: enemies.add(E3)
+    if 30 <= COIN     : enemies.add(E4)
 
     #Коллизия и столкновения
     if pygame.sprite.spritecollideany(P1, enemies):
           DISPLAYSURF.fill(RED)
           pygame.mixer.Sound(path + 'crash.wav').play()
           DISPLAYSURF.blit(game_over, game_over_rect)
-          time.sleep(0.5)
           pygame.display.update()
-          for entity in all_sprites:
-                entity.kill() 
-          time.sleep(2)
+          time.sleep(1)
           pygame.quit()
-          sys.exit()        
-    if pygame.sprite.spritecollideany(P1, coin):
-        pygame.mixer.Sound(path + "coin.ogg").play()
-        coin_collected = True
-        COIN+= 1
-    if pygame.sprite.spritecollideany(P1, bigcoin):
-        pygame.mixer.Sound(path + "coin.ogg").play()
-        bigcoin_collected = True
-        COIN+= 3
-    if pygame.sprite.spritecollideany(P1, diamond):
-        pygame.mixer.Sound(path + "coin.ogg").play()
-        diamond_collected = True
-        COIN+= 5
+          sys.exit()
 
-    BOOST = COIN // 5
+    for c in coins:
+        if pygame.sprite.collide_rect(P1, c):
+            pygame.mixer.Sound(path + "coin.ogg").play()
+            c.move(True)
+
+
+    for c in enemies:
+        for i in enemies:
+            if pygame.sprite.collide_rect(c, i) and c != i:
+                c.move(True)
+
+    if SPEED > 5: SPEED = 5
+    if BOOST > 10: BOOST = 10
     print(SPEED + BOOST)
     pygame.display.update()
+    pygame.display.set_caption(str(FramePerSec))
     FramePerSec.tick(FPS)
