@@ -41,6 +41,8 @@ while True:
     if pressed[pygame.K_KP_4]: mode = "square"
     if pressed[pygame.K_KP_5]: mode = "tr_triangle"
     if pressed[pygame.K_KP_6]: mode = "eq_triangle"
+    if pressed[pygame.K_KP_7]: mode = "rhombus"
+    
     
     
 
@@ -88,7 +90,9 @@ while True:
                 if mode == "tr_triangle":
                     pygame.draw.polygon(screen, color, [(l,u), (l,u+h), (l+w,u+h)], depth)
                 if mode == "eq_triangle":
-                    pygame.draw.polygon(screen, color, [(l,u+h), (l+h//2, u), (l+w,u+h)], depth)
+                    pygame.draw.polygon(screen, color, [(l,u+h), (l+w//2, u), (l+w,u+h)], depth)
+                if mode == "rhombus":
+                    pygame.draw.polygon(screen, color, [(l,u+h//2), (l+w//2, u), (l+w,u+h//2), (l+w//2, u+h)], depth)
     else:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
